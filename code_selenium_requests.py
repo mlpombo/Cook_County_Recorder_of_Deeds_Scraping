@@ -67,7 +67,7 @@ def beautifulsoup_scrape_html(id_table,deed_soup):
     #print(html.prettify())
     return html    
 
-def request_deed_html(scriptManager,target,numbers):
+def request_deed_html(scriptManager,target,numbers,driver):
     """
     #Use requests library to obtain the content of each deed and with Beautifulsoup 
     parse and extract the html.
@@ -76,6 +76,7 @@ def request_deed_html(scriptManager,target,numbers):
         scriptManager...Parameter used for requests
         target...Parameter used for requests
         numbers...List that contains the PIN number
+        driver...The Selenium Object containing the html as python Objects
     Return:
         HTML file of each deed scraped with beautiful soop
     """
@@ -88,7 +89,6 @@ def request_deed_html(scriptManager,target,numbers):
             'X-MicrosoftAjax': 'Delta=true',
             'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.100 Safari/537.36 (Windows NT 10.0; Win64; x64; rv:68.0) Gecko/20100101 Firefox/68.0',
             'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
-            'Cookie': 'IsImageUndock=False; DetailsViewMode=True; ASP.NET_SessionId=nfoaz3nj55la5izzzvvga155; BIGipServerpool_rod_public_website=1376261292.20480.0000; TS01688ffb=0169e52ff5a485c60e48506141c828b7b9875d9b3c122e165183e1b3bf0d347b0470762ba0b18496f27fa38d4ab219eaffb1ed3c64c2bb2c8ccdb8a9aad3564effc0c555ef644d84529359fb70f7e231216c0c0040', 
             }
 
     data = {
@@ -155,8 +155,13 @@ def request_deed_html(scriptManager,target,numbers):
             'OrderList1$ctl03': '',
             '__ASYNCPOST': 'true',
             }
+    #Get Cookies
+    cookies_list = driver.get_cookies()
+    cookies_dict = {}
+    for cookie in cookies_list:
+        cookies_dict[cookie['name']] = cookie['value']
     #Navigate to link with push
-    r = requests.post('http://162.217.184.82/i2/default.aspx', headers=headers, data=data)
+    r = requests.post('http://162.217.184.82/i2/default.aspx', headers=headers, data=data, cookies=cookies_dict, verify=False)
     #Obtain content of object r
     page_content = r.content
     #Create beautifulsoup object containing the html as python Objects.
@@ -200,7 +205,7 @@ def page_scraping(p,driver,pin):
             scriptManager = "DocList1$UpdatePanel|DocList1$GridView_Document$ctl" + x + "$ButtonRow_Recorded Date_" + y
         
         #Request each deed and extract the html information needed and save it in a .html   
-        html=request_deed_html(scriptManager,target,numbers)
+        html=request_deed_html(scriptManager,target,numbers,driver)
         #Write HTML String to file_x.html
         path = "results/deed_" + y + "_Page" + z +".html"
         with open(path, "w") as file:
